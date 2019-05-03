@@ -54,7 +54,7 @@ def represent_text(text, n):
 
 def read_files(path, label):
     # Reads all text files located in the 'path' and assigns them to 'label' class
-    files = glob.glob(path + os.sep + label + os.sep + '*.txt')
+    files = glob.glob(os.path.join(path, label, '*.txt'))
     texts = []
     for i, v in enumerate(files):
         f = codecs.open(v, 'r', encoding='utf-8')
@@ -80,55 +80,68 @@ def extract_vocabulary(texts, n, ft):
     return vocabulary
 
 
+def load_problem_data(path, problem):
+    probpath = os.path.join(path, problem)
+    path = os.path.join(probpath, 'problem-info.json')
+    with open(path, 'r') as f:
+        fj = json.load(f)
+
+    unk_folder = fj['unknown-folder']
+    candidates = [atr['author-name'] for atr in fj['candidate-authors']]
+
+    test = read_files(probpath, unk_folder)
+    train = []
+    for candidate in candidates:
+        train.extend(read_files(probpath, candidate))
+
+    return train, test, unk_folder
+
+
+def iter_problems(path):
+    infocollection = os.path.join(path, 'collection-info.json')
+    with open(infocollection, 'r') as f:
+        problems = [(atr['problem-name'], atr['language']) for atr in json.load(f)]
+
+    for problem, lang in problems:
+        yield (problem, *load_problem_data(path, problem))
+
+
+def preprocess(train, test):
+    pass
+
+
 def baseline(path, outpath, n=3, ft=5, pt=0.1):
     start_time = time.time()
-    # Reading information about the collection
-    infocollection = path + os.sep + 'collection-info.json'
-    problems = []
-    language = []
-    with open(infocollection, 'r') as f:
-        for attrib in json.load(f):
-            problems.append(attrib['problem-name'])
-            language.append(attrib['language'])
-    for index, problem in enumerate(problems):
-        print(problem)
-        # Reading information about the problem
-        infoproblem = path + os.sep + problem + os.sep + 'problem-info.json'
-        candidates = []
-        with open(infoproblem, 'r') as f:
-            fj = json.load(f)
-            unk_folder = fj['unknown-folder']
-            for attrib in fj['candidate-authors']:
-                candidates.append(attrib['author-name'])
-        # Building training set
-        train_docs = []
-        for candidate in candidates:
-            train_docs.extend(read_files(path + os.sep + problem, candidate))
-        train_texts = [text for i, (text, label) in enumerate(train_docs)]
-        train_labels = [label for i, (text, label) in enumerate(train_docs)]
+
+    for problem, train_docs, test_docs, unk_folder in iter_problems(path):
+        train_texts, train_labels = zip(*train_docs)
         vocabulary = extract_vocabulary(train_docs, n, ft)
-        vectorizer = CountVectorizer(analyzer='char', ngram_range=(
-            n, n), lowercase=False, vocabulary=vocabulary)
-        train_data = vectorizer.fit_transform(train_texts)
-        train_data = train_data.astype(float)
+        vectorizer = CountVectorizer(
+            analyzer='char',
+            ngram_range=(n, n),
+            lowercase=False,
+            vocabulary=vocabulary
+        )
+
+        train_data = vectorizer.fit_transform(train_texts).astype(float)
         for i, v in enumerate(train_texts):
             train_data[i] = train_data[i] / len(train_texts[i])
-        print('\t', 'language: ', language[index])
-        print('\t', len(candidates), 'candidate authors')
+        # print('\t', 'language: ', language)
+        print('\t', len(set(train_labels)), 'candidate authors')
         print('\t', len(train_texts), 'known texts')
         print('\t', 'vocabulary size:', len(vocabulary))
         # Building test set
-        test_docs = read_files(path + os.sep + problem, unk_folder)
-        test_texts = [text for i, (text, label) in enumerate(test_docs)]
-        test_data = vectorizer.transform(test_texts)
-        test_data = test_data.astype(float)
+        test_texts, _ = zip(*test_docs)
+        test_data = vectorizer.transform(test_texts).astype(float)
         for i, v in enumerate(test_texts):
             test_data[i] = test_data[i] / len(test_texts[i])
         print('\t', len(test_texts), 'unknown texts')
+
         # Applying SVM
         max_abs_scaler = preprocessing.MaxAbsScaler()
         scaled_train_data = max_abs_scaler.fit_transform(train_data)
         scaled_test_data = max_abs_scaler.transform(test_data)
+
         clf = CalibratedClassifierCV(OneVsRestClassifier(SVC(C=1, gamma='auto')), cv=3)
         clf.fit(scaled_train_data, train_labels)
         predictions = clf.predict(scaled_test_data)
@@ -143,11 +156,11 @@ def baseline(path, outpath, n=3, ft=5, pt=0.1):
         print('\t', count, 'texts left unattributed')
         # Saving output data
         out_data = []
-        unk_filelist = glob.glob(path + os.sep + problem + os.sep + unk_folder + os.sep + '*.txt')
-        pathlen = len(path + os.sep + problem + os.sep + unk_folder + os.sep)
+        unk_filelist = glob.glob(os.path.join(path, problem, unk_folder, '*.txt'))
+        pathlen = len(os.path.join(path, problem, unk_folder))
         for i, v in enumerate(predictions):
             out_data.append({'unknown-text': unk_filelist[i][pathlen:], 'predicted-author': v})
-        with open(outpath + os.sep + 'answers-' + problem + '.json', 'w') as f:
+        with open(os.path.join(outpath, 'answers-' + problem + '.json'), 'w') as f:
             json.dump(out_data, f, indent=4)
         print('\t', 'answers saved to file', 'answers-' + problem + '.json')
     print('elapsed time:', time.time() - start_time)
