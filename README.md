@@ -13,3 +13,7 @@ This project is aiming to solve [authorship attribution task](https://pan.webis.
 3. Install required packages
 
 ```pip install -r requirements.txt```
+
+4. Run the script
+
+```python baseline.py```
