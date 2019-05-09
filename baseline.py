@@ -1,15 +1,12 @@
 import os
 import glob
 import json
-import argparse
 import time
 import codecs
-from collections import defaultdict
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn import preprocessing
 from sklearn.calibration import CalibratedClassifierCV
+from feature_extractors import BaselineFeatureExtractor
 
 
 def read_files(path, label):
@@ -49,55 +46,6 @@ def iter_problems(path):
         yield (problem, *load_problem_data(path, problem))
 
 
-def baseline_features(x_train, y_train, x_test, n, min_f):
-    vectorizer = CountVectorizer(
-        analyzer='char',
-        ngram_range=(n, n),
-        lowercase=False,
-        vocabulary=extract_vocabulary(zip(x_train, y_train), n, min_f)
-    )
-
-    train_data = vectorizer.fit_transform(x_train).astype(float)
-    test_data = vectorizer.transform(x_test).astype(float)
-
-    for i, v in enumerate(x_train):
-        train_data[i] = train_data[i] / len(x_train[i])
-
-    for i, v in enumerate(x_test):
-        test_data[i] = test_data[i] / len(x_test[i])
-
-    max_abs_scaler = preprocessing.MaxAbsScaler()
-    train_data = max_abs_scaler.fit_transform(train_data)
-    test_data = max_abs_scaler.transform(test_data)
-
-    return train_data, test_data
-
-def represent_text(text, n):
-    # Extracts all character 'n'-grams from  a 'text'
-    if n > 0:
-        tokens = [text[i:i + n] for i in range(len(text) - n + 1)]
-    frequency = defaultdict(int)
-    for token in tokens:
-        frequency[token] += 1
-    return frequency
-
-def extract_vocabulary(texts, n, ft):
-    # Extracts all characer 'n'-grams occurring at least 'ft' times in a set of 'texts'
-    occurrences = defaultdict(int)
-    for (text, label) in texts:
-        text_occurrences = represent_text(text, n)
-        for ngram in text_occurrences:
-            if ngram in occurrences:
-                occurrences[ngram] += text_occurrences[ngram]
-            else:
-                occurrences[ngram] = text_occurrences[ngram]
-    vocabulary = []
-    for i in occurrences.keys():
-        if occurrences[i] >= ft:
-            vocabulary.append(i)
-    return vocabulary
-
-
 def baseline(path, outpath, n=3, ft=5, pt=0.1):
     start_time = time.time()
 
@@ -105,9 +53,10 @@ def baseline(path, outpath, n=3, ft=5, pt=0.1):
         x_train, y_train = zip(*train_docs)
         x_test, _ = zip(*test_docs)
 
-        train_data, test_data = baseline_features(
-            x_train, y_train, x_test, n, ft
-        )
+        extractor = BaselineFeatureExtractor()
+        extractor.fit(x_train)
+        train_data = extractor.transform(x_train)
+        test_data = extractor.transform(x_test)
 
         print('\t', len(set(y_train)), 'candidate authors')
         print('\t', len(x_train), 'known texts')
