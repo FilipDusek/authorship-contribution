@@ -95,4 +95,4 @@ if __name__ == '__main__':
     # n: n-gram order (default=3)
     # ft: frequency threshold (default=5)
     # pt: probability threshold for the reject option (default=0.1)
-    baseline('./data', './output', 3, 5, 0.1)
+    baseline('./data/problems', './data/answers', 3, 5, 0.1)

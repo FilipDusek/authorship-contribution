@@ -167,13 +167,13 @@ def main():
     parser = argparse.ArgumentParser(description='Evaluation script AA@PAN2019')
     parser.add_argument('-i', type=str,
                         help='Path to evaluation collection',
-                        default='./data')
+                        default='./data/problems')
     parser.add_argument('-a', type=str,
                         help='Path to answers folder',
-                        default='./output')
+                        default='./data/answers')
     parser.add_argument('-o', type=str,
                         help='Path to output files',
-                        default='./evaluation')
+                        default='./data/evaluation')
     args = parser.parse_args()
     if not args.i:
         print('ERROR: The collection path is required')
