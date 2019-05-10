@@ -81,7 +81,7 @@ def baseline(path, outpath, n=3, ft=5, pt=0.1):
         unk_filelist = glob.glob(os.path.join(path, problem, unk_folder, '*.txt'))
         pathlen = len(os.path.join(path, problem, unk_folder))
         for i, v in enumerate(predictions):
-            out_data.append({'unknown-text': unk_filelist[i][pathlen:], 'predicted-author': v})
+            out_data.append({'unknown-text': unk_filelist[i][pathlen + 1:], 'predicted-author': v})
         with open(os.path.join(outpath, 'answers-' + problem + '.json'), 'w') as f:
             json.dump(out_data, f, indent=4)
         print('\t', 'answers saved to file', 'answers-' + problem + '.json')
