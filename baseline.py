@@ -2,10 +2,8 @@ import os
 import glob
 import json
 import time
-from sklearn.svm import SVC
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.calibration import CalibratedClassifierCV
 from feature_extractors import BaselineFeatureExtractor
+from classifiers import BaselineClassifier
 from problems import Problems
 
 
@@ -21,24 +19,15 @@ def baseline(path, outpath, n=3, ft=5, pt=0.1):
         train_data = extractor.transform(x_train)
         test_data = extractor.transform(x_test)
 
+        clf = BaselineClassifier(pt=pt)
+        clf.fit(train_data, y_train)
+        predictions = clf.predict(test_data)
+
         print('\t', len(set(y_train)), 'candidate authors')
         print('\t', len(x_train), 'known texts')
         print('\t', len(x_test), 'unknown texts')
+        print('\t', (predictions == '<UNK>').sum(), 'texts left unattributed')
 
-        clf = CalibratedClassifierCV(OneVsRestClassifier(SVC(C=1, gamma='auto')), cv=3)
-
-        clf.fit(train_data, y_train)
-        predictions = clf.predict(test_data)
-        proba = clf.predict_proba(test_data)
-
-        # Reject option (used in open-set cases)
-        count = 0
-        for i, p in enumerate(predictions):
-            sproba = sorted(proba[i], reverse=True)
-            if sproba[0] - sproba[1] < pt:
-                predictions[i] = u'<UNK>'
-                count = count + 1
-        print('\t', count, 'texts left unattributed')
         # Saving output data
         out_data = []
         unk_filelist = glob.glob(os.path.join(path, problem, unk_folder, '*.txt'))
