@@ -1,42 +1,27 @@
-import os
-import glob
-import json
 import time
-from feature_extractors import BaselineFeatureExtractor
-from classifiers import BaselineClassifier
-from problems import Problems
-
+from feature_extractors import POSFeatureExtractor as FeatureExtractor
+from classifiers import BaselineClassifier as Classifier
+from problems import ProblemLoader
+from utils import save_answers, print_report
 
 def baseline(path, outpath, n=3, ft=5, pt=0.1):
     start_time = time.time()
-    problems = Problems(path)
-    for problem, train_docs, test_docs, unk_folder, lang in problems.iter():
-        x_train, y_train = zip(*train_docs)
-        x_test, _ = zip(*test_docs)
+    problems = ProblemLoader(path)
+    for problem in problems.iter():
+        print('Processing {}...'.format(problem.problem_name))
+        
+        extractor = FeatureExtractor()
+        extractor.fit(problem.train.X)
+        train_data = extractor.transform(problem.train.X)
+        test_data = extractor.transform(problem.test.X)
 
-        extractor = BaselineFeatureExtractor()
-        extractor.fit(x_train)
-        train_data = extractor.transform(x_train)
-        test_data = extractor.transform(x_test)
-
-        clf = BaselineClassifier(pt=pt)
-        clf.fit(train_data, y_train)
+        clf = Classifier(pt=pt)
+        clf.fit(train_data, problem.train.y)
         predictions = clf.predict(test_data)
 
-        print('\t', len(set(y_train)), 'candidate authors')
-        print('\t', len(x_train), 'known texts')
-        print('\t', len(x_test), 'unknown texts')
-        print('\t', (predictions == '<UNK>').sum(), 'texts left unattributed')
+        print_report(problem, predictions)
+        save_answers(problem, predictions, path, outpath)
 
-        # Saving output data
-        out_data = []
-        unk_filelist = glob.glob(os.path.join(path, problem, unk_folder, '*.txt'))
-        pathlen = len(os.path.join(path, problem, unk_folder))
-        for i, v in enumerate(predictions):
-            out_data.append({'unknown-text': unk_filelist[i][pathlen + 1:], 'predicted-author': v})
-        with open(os.path.join(outpath, 'answers-' + problem + '.json'), 'w') as f:
-            json.dump(out_data, f, indent=4)
-        print('\t', 'answers saved to file', 'answers-' + problem + '.json')
     print('elapsed time:', time.time() - start_time)
 
 
