@@ -21,9 +21,29 @@ def extract(extractor_cls, problem):
     train_data = extractor.transform(problem.train.X)
     test_data = extractor.transform(problem.test.X)
 
-    error = '{} needs to return numpy array'.format(extractor_cls.__name__)
-    assert isinstance(train_data, np.ndarray), error
-    assert isinstance(test_data, np.ndarray), error
+    extractor_name = extractor_cls.__name__
+    assert train_data.shape[1] == test_data.shape[1], \
+        '{} needs to return the same amount of features for both testing and' \
+        ' training data. It returns {} for training and {} for testing.'.format(
+        extractor_name, train_data.shape, test_data.shape
+    )
+
+    error_shape = 'First dimension of data returned by {} needs to have same' \
+                  'length as the input data. The length is {}, but should be {}.'
+    assert train_data.shape[0] == len(problem.train.X), \
+        error_shape.format(extractor_name, train_data.shape[0], len(problem.train.X))
+    assert test_data.shape[0] == len(problem.test.X), \
+        error_shape.format(extractor_name, test_data.shape[0], len(problem.test.X))
+
+    error_ndarray = '{} needs to return numpy array. '.format(extractor_name)
+    assert isinstance(train_data, np.ndarray), error_ndarray
+    assert isinstance(test_data, np.ndarray), error_ndarray
+
+    error_dim = '{} needs to return two-dimensional numpy array. Returned {}.'
+    assert len(test_data.shape) == 2, \
+        error_dim.format(extractor_name, test_data.shape)
+    assert len(train_data.shape) == 2, \
+        error_dim.format(extractor_name, train_data.shape)
 
     return train_data, test_data
 
@@ -51,6 +71,7 @@ def baseline(path, outpath):
 
         print_result_report(problem, predictions)
         save_answers(problem, predictions, path, outpath)
+
 
 if __name__ == '__main__':
     start_time = time.time()
