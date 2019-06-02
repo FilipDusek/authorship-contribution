@@ -4,10 +4,10 @@ class PunctFeatureExtractor:
     def __init__(self, marks=5, weighted=True):
         self.marks = marks
         self.weighted = weighted
-    def _target(self, X):
+    def fit(self, X):
         targetdict = {mark:count for mark, count in ct.Counter(X).items() if mark.isalnum() == False and mark != " "}
         self.topmarks = sorted(targetdict, key=targetdict.get, reverse=True)[:self.marks]
-    def _extract(self, X):
+    def transform(self, X):
         vector_counts = np.zeros(len(self.topmarks))
         for i in range(len(self.topmarks)):
             vector_counts[i]=X.count(self.topmarks[i])
