@@ -5,6 +5,7 @@ import string
 
 import nltk
 
+
 class POSFeatureExtractor:
     def sliding_window(self, l, take=3):
         slices = (l[i:] for i in range(take))

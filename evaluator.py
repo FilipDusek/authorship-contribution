@@ -103,29 +103,30 @@ def eval_measures(gt, pred):
     # get F1 for individual classes (and suppress warnings):
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
-        labels=list(set(gold_author_ints))
+        labels = list(set(gold_author_ints))
         # Exclude the <UNK> class
         for x in labels:
-            if encoder.inverse_transform([x])=='<UNK>':
+            if encoder.inverse_transform([x]) == '<UNK>':
                 labels.remove(x)
         f1 = f1_score(gold_author_ints,
-                  silver_author_ints,
-                  labels,
-                  average='macro')
+                      silver_author_ints,
+                      labels,
+                      average='macro')
         precision = precision_score(gold_author_ints,
-                  silver_author_ints,
-                  labels,
-                  average='macro')
+                                    silver_author_ints,
+                                    labels,
+                                    average='macro')
         recall = recall_score(gold_author_ints,
-                  silver_author_ints,
-                  labels,
-                  average='macro')
+                              silver_author_ints,
+                              labels,
+                              average='macro')
         accuracy = accuracy_score(gold_author_ints,
-                  silver_author_ints)
+                                  silver_author_ints)
 
-    return f1,precision,recall
+    return f1, precision, recall
 
-def evaluate(ground_truth_file,predictions_file):
+
+def evaluate(ground_truth_file, predictions_file):
     # Calculates evaluation measures for a single attribution problem
     gt = {}
     with open(ground_truth_file, 'r') as f:
@@ -137,31 +138,37 @@ def evaluate(ground_truth_file,predictions_file):
         for attrib in json.load(f):
             if attrib['unknown-text'] not in pred:
                 pred[attrib['unknown-text']] = attrib['predicted-author']
-    f1,precision,recall =  eval_measures(gt,pred)
-    return round(f1,3), round(precision,3), round(recall,3)
+    f1, precision, recall = eval_measures(gt, pred)
+    return round(f1, 3), round(precision, 3), round(recall, 3)
 
-def evaluate_all(path_collection,path_answers,path_out):
+
+def evaluate_all(path_collection, path_answers, path_out):
     # Calculates evaluation measures for a PAN-18 collection of attribution problems
-    infocollection = path_collection+os.sep+'collection-info.json'
+    infocollection = path_collection + os.sep + 'collection-info.json'
     problems = []
     data = []
     with open(infocollection, 'r') as f:
         for attrib in json.load(f):
             problems.append(attrib['problem-name'])
-    scores=[];
+    scores = []
     for problem in problems:
-        f1,precision,recall=evaluate(path_collection+os.sep+problem+os.sep+'ground-truth.json',path_answers+os.sep+'answers-'+problem+'.json')
+        f1, precision, recall = evaluate(path_collection + os.sep + problem + os.sep +
+                                         'ground-truth.json', path_answers + os.sep + 'answers-' + problem + '.json')
         scores.append(f1)
-        data.append({'problem-name': problem, 'macro-f1': round(f1,3), 'macro-precision': round(precision,3), 'macro-recall': round(recall,3)})
-        print(str(problem),'Macro-F1:',round(f1,3))
-    overall_score=sum(scores)/len(scores)
+        data.append({'problem-name': problem, 'macro-f1': round(f1, 3),
+                     'macro-precision': round(precision, 3), 'macro-recall': round(recall, 3)})
+        print(str(problem), 'Macro-F1:', round(f1, 3))
+    overall_score = sum(scores) / len(scores)
     # Saving data to output files (out.json and evaluation.prototext)
-    with open(path_out+os.sep+'out.json', 'w') as f:
-        json.dump({'problems': data, 'overall_score': round(overall_score,3)}, f, indent=4, sort_keys=True)
-    print('Overall score:', round(overall_score,3))
-    prototext='measure {\n key: "mean macro-f1"\n value: "'+str(round(overall_score,3))+'"\n}\n'
-    with open(path_out+os.sep+'evaluation.prototext', 'w') as f:
+    with open(path_out + os.sep + 'out.json', 'w') as f:
+        json.dump({'problems': data, 'overall_score': round(
+            overall_score, 3)}, f, indent=4, sort_keys=True)
+    print('Overall score:', round(overall_score, 3))
+    prototext = 'measure {\n key: "mean macro-f1"\n value: "' + \
+        str(round(overall_score, 3)) + '"\n}\n'
+    with open(path_out + os.sep + 'evaluation.prototext', 'w') as f:
         f.write(prototext)
+
 
 def main():
     parser = argparse.ArgumentParser(description='Evaluation script AA@PAN2019')
@@ -185,7 +192,8 @@ def main():
         print('ERROR: The output path is required')
         parser.exit(1)
 
-    evaluate_all(args.i,args.a,args.o)
+    evaluate_all(args.i, args.a, args.o)
+
 
 if __name__ == '__main__':
     main()

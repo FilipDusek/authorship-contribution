@@ -28,7 +28,6 @@ class BaselineFeatureExtractor():
 
         return self
 
-
     def transform(self, X):
         vectorized = self.vectorizer.transform(X).astype(float)
 
@@ -36,7 +35,6 @@ class BaselineFeatureExtractor():
             vectorized[i] = vectorized[i] / len(X[i])
 
         return self.max_abs_scaler.transform(vectorized).toarray()
-
 
     def _extract_vocabulary(self, texts):
         """

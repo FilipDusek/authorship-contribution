@@ -4,6 +4,7 @@ import glob
 import json
 from types import SimpleNamespace
 
+
 class Problem:
     def __init__(self, problem, train_docs, test_docs, unk_folder, lang):
         self.problem_name = problem
