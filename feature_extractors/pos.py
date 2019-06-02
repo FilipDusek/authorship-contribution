@@ -40,4 +40,4 @@ class POSFeatureExtractor:
     def transform(self, X):
         counts = [self._get_counts(item) for item in X]
 
-        return self.vectorizer.transform(counts)
+        return self.vectorizer.transform(counts).toarray()
