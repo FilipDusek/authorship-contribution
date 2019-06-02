@@ -35,7 +35,7 @@ class BaselineFeatureExtractor():
         for i, doc in enumerate(X):
             vectorized[i] = vectorized[i] / len(X[i])
 
-        return self.max_abs_scaler.transform(vectorized)
+        return self.max_abs_scaler.transform(vectorized).toarray()
 
 
     def _extract_vocabulary(self, texts):
