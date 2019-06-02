@@ -1,6 +1,8 @@
 import time
 import numpy as np
-from feature_extractors import POSFeatureExtractor, BaselineFeatureExtractor
+from feature_extractors import (
+    POSFeatureExtractor, BaselineFeatureExtractor, PunctFeatureExtractor
+)
 from classifiers import BaselineClassifier as Classifier
 from problems import ProblemLoader
 from utils import save_answers, print_result_report, print_fex_report
@@ -8,7 +10,8 @@ from itertools import combinations, chain, product, islice
 
 feature_extractors = [
     BaselineFeatureExtractor,
-    POSFeatureExtractor
+    POSFeatureExtractor,
+    PunctFeatureExtractor
 ]
 
 
