@@ -1,7 +1,7 @@
 import time
 import numpy as np
 from feature_extractors import (
-    POSFeatureExtractor, BaselineFeatureExtractor, PunctFeatureExtractor
+    POSFeatureExtractor, BaselineFeatureExtractor, PunctFeatureExtractor, FunctionWFeatureExtractor
 )
 from classifiers import BaselineClassifier as Classifier
 from problems import ProblemLoader
