@@ -22,6 +22,16 @@ def extract(extractor_cls, problem):
     test_data = extractor.transform(problem.test.X)
 
     extractor_name = extractor_cls.__name__
+    error_ndarray = '{} needs to return numpy array. '.format(extractor_name)
+    assert isinstance(train_data, np.ndarray), error_ndarray
+    assert isinstance(test_data, np.ndarray), error_ndarray
+
+    error_dim = '{} needs to return two-dimensional numpy array. Returned {}.'
+    assert len(test_data.shape) == 2, \
+        error_dim.format(extractor_name, test_data.shape)
+    assert len(train_data.shape) == 2, \
+        error_dim.format(extractor_name, train_data.shape)
+
     assert train_data.shape[1] == test_data.shape[1], \
         '{} needs to return the same amount of features for both testing and' \
         ' training data. It returns {} for training and {} for testing.'.format(
@@ -34,16 +44,6 @@ def extract(extractor_cls, problem):
         error_shape.format(extractor_name, train_data.shape[0], len(problem.train.X))
     assert test_data.shape[0] == len(problem.test.X), \
         error_shape.format(extractor_name, test_data.shape[0], len(problem.test.X))
-
-    error_ndarray = '{} needs to return numpy array. '.format(extractor_name)
-    assert isinstance(train_data, np.ndarray), error_ndarray
-    assert isinstance(test_data, np.ndarray), error_ndarray
-
-    error_dim = '{} needs to return two-dimensional numpy array. Returned {}.'
-    assert len(test_data.shape) == 2, \
-        error_dim.format(extractor_name, test_data.shape)
-    assert len(train_data.shape) == 2, \
-        error_dim.format(extractor_name, train_data.shape)
 
     return train_data, test_data
 
