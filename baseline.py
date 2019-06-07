@@ -7,6 +7,7 @@ from classifiers import BaselineClassifier as Classifier
 from problems import ProblemLoader
 from utils import save_answers, print_result_report, print_fex_report
 from itertools import combinations, chain, product, islice
+from functools import lru_cache
 
 feature_extractors = [
     BaselineFeatureExtractor,
@@ -17,6 +18,7 @@ feature_extractors = [
 
 def extract(extractor_cls, problem):
     extractor = extractor_cls()
+@lru_cache(maxsize=128)
     extractor.fit(problem.train.X)
     train_data = extractor.transform(problem.train.X)
     test_data = extractor.transform(problem.test.X)
@@ -71,6 +73,7 @@ def baseline(path, outpath):
 
         print_result_report(problem, predictions)
         save_answers(problem, predictions, path, outpath)
+    print(extract.cache_info())
 
 
 if __name__ == '__main__':
