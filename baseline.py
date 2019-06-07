@@ -1,24 +1,30 @@
 import time
 import numpy as np
 from feature_extractors import (
-    POSFeatureExtractor, BaselineFeatureExtractor, PunctFeatureExtractor, FunctionWFeatureExtractor
+    PosFeatureExtractor, BaselineFeatureExtractor, PunctFeatureExtractor,
+    FunctionWFeatureExtractor, BaseFeatureExtractor
 )
 from classifiers import BaselineClassifier as Classifier
 from problems import ProblemLoader
-from utils import save_answers, print_result_report, print_fex_report
+from utils import save_answers, print_result_report, print_fex_report, hashabledict
 from itertools import combinations, chain, product, islice
 from functools import lru_cache
 
 feature_extractors = [
-    BaselineFeatureExtractor,
-    POSFeatureExtractor,
-    PunctFeatureExtractor
+    (PunctFeatureExtractor, {}),
+    (
+        BaseFeatureExtractor,
+        {'ngram_range': (3, 3), 'use_tfidf': True, 'analyzer': 'char', 'lowercase': False}
+    ),
+    (
+        PosFeatureExtractor,
+        {'ngram_range': (2, 2), 'use_tfidf': True}
+    ),
 ]
 
-
-def extract(extractor_cls, problem):
-    extractor = extractor_cls()
 @lru_cache(maxsize=128)
+def extract(extractor_cls, extractor_args, problem):
+    extractor = extractor_cls(**extractor_args)
     extractor.fit(problem.train.X)
     train_data = extractor.transform(problem.train.X)
     test_data = extractor.transform(problem.test.X)
@@ -61,11 +67,12 @@ def baseline(path, outpath):
         print('Processing {}...'.format(problem.problem_name))
 
         # Extract the features [(train, test), (train, test), ...]
-        data = [extract(fex, problem) for fex in fexs_selected]
+        data = [extract(fex, hashabledict(args), problem) for fex, args in fexs_selected]
         # Rotate from rows to clumns and concatenate the features
         train_data, test_data = [np.concatenate(item, axis=1) for item in zip(*data)]
 
-        print_fex_report(fexs_selected, train_data)
+        fexs, _ = zip(*fexs_selected)
+        print_fex_report(fexs, train_data)
 
         clf = Classifier(pt=0.1)
         clf.fit(train_data, problem.train.y)

@@ -3,6 +3,13 @@ import warnings
 import os
 import glob
 import json
+import functools
+
+
+class hashabledict(dict):
+    def __hash__(self):
+        return hash(tuple(sorted(self.items())))
+
 
 def save_answers(problem, predictions, path, outpath):
     # Saving output data
