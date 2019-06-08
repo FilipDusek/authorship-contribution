@@ -1,9 +1,11 @@
 import numpy as np
+from nltk.stem import WordNetLemmatizer
 import nltk
 
 class FunctionWFeatureExtractor:
     def __init__(self, percent_cutoff = 0.9):
         self.percent_cutoff = percent_cutoff
+        self.lemmatizer = WordNetLemmatizer()
     def _clean(self, X):
         clean_doc = ""
         for doc in X:
