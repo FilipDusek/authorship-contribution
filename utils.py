@@ -32,10 +32,10 @@ def save_answers(problem, predictions, path, outpath):
         json.dump(out_data, f, indent=4)
     print('\t', 'answers saved to file', 'answers-' + problem.problem_name + '.json')
 
-def print_fex_report(fexs, features):
-    fexs_text = ', '.join([cls.__name__ for cls in fexs])
-    print('\t', '{} used.'.format(fexs_text))
-    print('\t', '{} features identified.'.format(features.shape[1]))
+def print_fex_report(fexs, names, features):
+    fexs_text = ', '.join(names)
+    print('\t', '{} used'.format(fexs_text))
+    print('\t', '{} features identified'.format(features.shape[1]))
 
 def print_result_report(problem, predictions):
     with warnings.catch_warnings():

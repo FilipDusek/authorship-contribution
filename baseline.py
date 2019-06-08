@@ -2,7 +2,7 @@ import time
 import numpy as np
 from feature_extractors import (
     PosFeatureExtractor, BaselineFeatureExtractor, PunctFeatureExtractor,
-    FunctionWFeatureExtractor, BaseFeatureExtractor
+    FunctionWFeatureExtractor, BaseFeatureExtractor, BOWFeatureExtractor
 )
 from classifiers import BaselineClassifier as Classifier
 from problems import ProblemLoader
@@ -11,16 +11,36 @@ from itertools import combinations, chain, product, islice
 from functools import lru_cache
 
 feature_extractors = [
-    (PunctFeatureExtractor, {}),
+    (PunctFeatureExtractor, {}, 'punctuation'),
+    (FunctionWFeatureExtractor, {}, 'function words'),
+    (BOWFeatureExtractor, {}, 'bag of words (custom)'),
     (
         BaseFeatureExtractor,
-        {'ngram_range': (3, 3), 'use_tfidf': True, 'analyzer': 'char', 'lowercase': False}
+        {'use_tfidf': False, 'analyzer': 'word', 'lowercase': False},
+        'bag of words (sklearn)'
+    ),
+    (
+        BaseFeatureExtractor,
+        {'ngram_range': (3,3), 'use_tfidf': False, 'analyzer': 'word', 'lowercase': False},
+        'word 3-gram without tfidf'
+    ),
+    (
+        BaseFeatureExtractor,
+        {'ngram_range': (2,2), 'use_tfidf': False, 'analyzer': 'word', 'lowercase': False},
+        'word 2-gram without tfidf'
+    ),
+    (
+        BaseFeatureExtractor,
+        {'ngram_range': (3, 3), 'use_tfidf': True, 'analyzer': 'char', 'lowercase': False},
+        'char 3-gram with tfidf'
     ),
     (
         PosFeatureExtractor,
-        {'ngram_range': (2, 2), 'use_tfidf': True}
+        {'ngram_range': (2, 2), 'use_tfidf': True},
+        'part of speech tags 2-gram with tfidf'
     ),
 ]
+
 
 @lru_cache(maxsize=128)
 def extract(extractor_cls, extractor_args, problem):
@@ -67,12 +87,12 @@ def baseline(path, outpath):
         print('Processing {}...'.format(problem.problem_name))
 
         # Extract the features [(train, test), (train, test), ...]
-        data = [extract(fex, hashabledict(args), problem) for fex, args in fexs_selected]
+        data = [extract(fex, hashabledict(args), problem) for fex, args, _ in fexs_selected]
         # Rotate from rows to clumns and concatenate the features
         train_data, test_data = [np.concatenate(item, axis=1) for item in zip(*data)]
 
-        fexs, _ = zip(*fexs_selected)
-        print_fex_report(fexs, train_data)
+        fexs, _, names = zip(*fexs_selected)
+        print_fex_report(fexs, names, train_data)
 
         clf = Classifier(pt=0.1)
         clf.fit(train_data, problem.train.y)
