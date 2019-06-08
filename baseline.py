@@ -105,5 +105,5 @@ def baseline(path, outpath):
 
 if __name__ == '__main__':
     start_time = time.time()
-    baseline('./data/problems', './data/answers')
+    baseline('./data/problems-pan18', './data/answers')
     print('elapsed time:', time.time() - start_time)
