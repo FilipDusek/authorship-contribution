@@ -11,13 +11,4 @@ class RandomForestClassifier:
         return self
 
     def predict(self, X):
-        predictions = self.clf.predict(X)
-        proba = self.clf.predict_proba(X)
-
-        # Reject option (used in open-set cases)
-        for i, p in enumerate(predictions):
-            sproba = sorted(proba[i], reverse=True)
-            if (sproba[0] - sproba[1]) < self.pt:
-                predictions[i] = u'<UNK>'
-
-        return predictions
+        return self.clf.predict(X)

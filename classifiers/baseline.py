@@ -14,6 +14,5 @@ class BaselineClassifier:
         return self
 
     def predict(self, X):
-        predictions = self.clf.predict(X)
 
-        return predictions
+        return self.clf.predict(X)
