@@ -174,7 +174,7 @@ def main():
     parser = argparse.ArgumentParser(description='Evaluation script AA@PAN2019')
     parser.add_argument('-i', type=str,
                         help='Path to evaluation collection',
-                        default='./data/problems')
+                        default='./data/problems-pan18')
     parser.add_argument('-a', type=str,
                         help='Path to answers folder',
                         default='./data/answers')
