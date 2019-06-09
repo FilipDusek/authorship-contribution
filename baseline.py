@@ -82,6 +82,7 @@ def baseline(path, outpath):
     fex_combinations = (combinations(feature_extractors, i)
                         for i in range(1, len(feature_extractors) + 1))
     fex_combinations = chain(*fex_combinations)
+    print(Classifier.__name__)
 
     for problem, fexs_selected in product(problem_iterator, fex_combinations):
         print('Processing {}...'.format(problem.problem_name))
@@ -94,7 +95,7 @@ def baseline(path, outpath):
         fexs, _, names = zip(*fexs_selected)
         print_fex_report(fexs, names, train_data)
 
-        clf = Classifier(pt=0.1)
+        clf = Classifier()
         clf.fit(train_data, problem.train.y)
         predictions = clf.predict(test_data)
 
