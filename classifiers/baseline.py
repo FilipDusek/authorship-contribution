@@ -4,9 +4,8 @@ from sklearn.calibration import CalibratedClassifierCV
 
 
 class BaselineClassifier:
-    def __init__(self, pt=0.1):
+    def __init__(self):
         self.clf = OneVsRestClassifier(LinearSVC(C=1))
-        self.pt = pt
 
     def fit(self, X, y):
         self.clf.fit(X, y)
