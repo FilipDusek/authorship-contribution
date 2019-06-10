@@ -7,7 +7,7 @@ from sklearn.calibration import CalibratedClassifierCV
 
 class LogisticRegressionClassifier:
     def __init__(self):
-        self.clf = LogisticRegression(multi_class='auto', solver='lbfgs')
+        self.clf = LogisticRegression(multi_class='auto', solver='lbfgs', max_iter=1000)
 
     def fit(self, X, y):
         self.clf.fit(X, y)

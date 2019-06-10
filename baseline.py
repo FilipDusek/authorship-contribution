@@ -1,45 +1,35 @@
 import time
 import numpy as np
-from feature_extractors import (
-    PosFeatureExtractor, BaselineFeatureExtractor, PunctFeatureExtractor,
-    FunctionWFeatureExtractor, BaseFeatureExtractor, BOWFeatureExtractor
-)
-from classifiers import BaselineClassifier as Classifier
+from feature_extractors import FeatureExtractor
+from classifiers import LogisticRegressionClassifier as Classifier
 from problems import ProblemLoader
-from utils import save_answers, print_result_report, print_fex_report, hashabledict
+from utils import (
+    save_answers, print_result_report, print_fex_report, hashabledict,
+    fex_signature, make_benchmark_row
+)
 from itertools import combinations, chain, product, islice
 from functools import lru_cache
+import pandas as pd
+import warnings
+from sklearn.exceptions import ConvergenceWarning
 
-feature_extractors = [
-    (PunctFeatureExtractor, {}, 'punctuation'),
-    (FunctionWFeatureExtractor, {}, 'function words'),
-    (BOWFeatureExtractor, {}, 'bag of words (custom)'),
-    (
-        BaseFeatureExtractor,
-        {'use_tfidf': False, 'analyzer': 'word', 'lowercase': False},
-        'bag of words (sklearn)'
-    ),
-    (
-        BaseFeatureExtractor,
-        {'ngram_range': (3,3), 'use_tfidf': False, 'analyzer': 'word', 'lowercase': False},
-        'word 3-gram without tfidf'
-    ),
-    (
-        BaseFeatureExtractor,
-        {'ngram_range': (2,2), 'use_tfidf': False, 'analyzer': 'word', 'lowercase': False},
-        'word 2-gram without tfidf'
-    ),
-    (
-        BaseFeatureExtractor,
-        {'ngram_range': (3, 3), 'use_tfidf': True, 'analyzer': 'char', 'lowercase': False},
-        'char 3-gram with tfidf'
-    ),
-    (
-        PosFeatureExtractor,
-        {'ngram_range': (2, 2), 'use_tfidf': True},
-        'part of speech tags 2-gram with tfidf'
-    ),
-]
+
+configs = {
+    'ngram_range': [(1, 1), (2, 2), (3, 3)],
+    'use_tfidf': [False, True],
+    'use_scaler': [False, True],
+    'analyzer': ['char', 'word'],
+    'tokenizer': [None, 'pos']
+}
+feature_extractors = []
+
+for values in product(*configs.values()):
+    config = dict(zip(configs.keys(), values))
+    feature_extractors += [
+        (FeatureExtractor,
+        config,
+        str(config))
+    ]
 
 
 @lru_cache(maxsize=128)
@@ -76,31 +66,36 @@ def extract(extractor_cls, extractor_args, problem):
     return train_data, test_data
 
 
-def baseline(path, outpath):
+def baseline(path, outpath, do_combinations=False):
     problems = ProblemLoader(path)
     problem_iterator = islice(problems.iter(), 1)
-    fex_combinations = (combinations(feature_extractors, i)
-                        for i in range(1, len(feature_extractors) + 1))
-    fex_combinations = chain(*fex_combinations)
-    print(Classifier.__name__)
+    if do_combinations:
+        fex_to_test = (combinations(feature_extractors, i)
+                            for i in range(1, len(feature_extractors) + 1))
+        fex_to_test = chain(*fex_combinations)
+    else:
+        fex_to_test = [[fex] for fex in feature_extractors]
 
-    for problem, fexs_selected in product(problem_iterator, fex_combinations):
-        print('Processing {}...'.format(problem.problem_name))
-
+    print('Using classifier: {}'.format(Classifier.__name__))
+    benchmark_rows = []
+    for problem, fexs_selected in product(problem_iterator, fex_to_test):
         # Extract the features [(train, test), (train, test), ...]
         data = [extract(fex, hashabledict(args), problem) for fex, args, _ in fexs_selected]
         # Rotate from rows to clumns and concatenate the features
         train_data, test_data = [np.concatenate(item, axis=1) for item in zip(*data)]
 
-        fexs, _, names = zip(*fexs_selected)
-        print_fex_report(fexs, names, train_data)
+        print('Testing {}'.format(problem.problem_name))
+        print_fex_report(fexs_selected)
 
         clf = Classifier()
-        clf.fit(train_data, problem.train.y)
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore')
+            clf.fit(train_data, problem.train.y)
         predictions = clf.predict(test_data)
 
-        print_result_report(problem, predictions)
-        save_answers(problem, predictions, path, outpath)
+        benchmark_rows.append(make_benchmark_row(fexs_selected, problem, predictions))
+        pd.DataFrame.from_records(benchmark_rows).to_csv('scores.csv')
+        # save_answers(problem, predictions, path, outpath)
     print(extract.cache_info())
 
 

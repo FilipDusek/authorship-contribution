@@ -2,3 +2,4 @@ jupyter==1.0.0
 numpy==1.16.3
 scikit-learn==0.20.3
 nltk==3.4.1
+pandas==0.24.2
