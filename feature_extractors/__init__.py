@@ -4,3 +4,7 @@ from .functionw import FunctionWFeatureExtractor
 from .base import FeatureExtractor
 from .BOW import BOWFeatureExtractor
 from .tokens import TokensFeatureExtractor
+from .baseline import BaselineFeatureExtractor
+from .cembeddings import CustomEmbeddingsFeatureExtractor
+from .embeddings import WordEmbeddingsFeatureExtractor
+from .token_ngrams import TokenNGramsFeatureExtractor
