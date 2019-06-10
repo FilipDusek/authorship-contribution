@@ -13,22 +13,22 @@ class TokenNGramsFeatureExtractor:
         
     def _clean(self, doc):
         if self.with_punct == True:
-            ngrams = [token for token in word_tokenize(doc)]
+            tokens = word_tokenize(doc)
         else:
-            ngrams = [token.lower() for token in list(filter(None, re.split(r'\W+', doc)))]
+            tokens = list(filter(None, re.split(r'\W+', doc)))
 
-        ngrams = [" ".join(ngrams[i:i+(self.n)]) for i in range(0, len(ngrams)-(self.n-1))]
+        ngrams = [" ".join(tokens[i:i+(self.n)]) for i in range(0, len(tokens)-(self.n-1))]
         return ngrams
     
-    def fit(self, X_train):
-        counts = sum([Counter(self._clean(doc)) for doc in X_train], Counter())
+    def fit(self, X):
+        counts = sum([Counter(self._clean(doc)) for doc in X], Counter())
         low_cut = int(self.low_cut*len(counts))
         high_cut = int(self.high_cut*len(counts))
         self.words = sorted(counts, key=counts.get, reverse=False)[low_cut:high_cut]
         
-    def transform(self, X_test):
+    def transform(self, X):
         bows = []
-        for doc in X_test:
+        for doc in X:
             bow = np.zeros(len(self.words))
             for word in self._clean(doc):
                 if word in self.words:
