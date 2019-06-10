@@ -1,8 +1,8 @@
 import nltk
-from .base import BaseFeatureExtractor
+from .base import FeatureExtractor
 
 
-class PosFeatureExtractor(BaseFeatureExtractor):
+class PosFeatureExtractor(FeatureExtractor):
     def tokenize(self, doc):
         tokens = nltk.word_tokenize(doc)
         _, tags = zip(*nltk.pos_tag(tokens))
