@@ -1,4 +1,4 @@
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, precision_recall_fscore_support
 import warnings
 import os
 import glob
@@ -10,6 +10,9 @@ class hashabledict(dict):
     def __hash__(self):
         return hash(tuple(sorted(self.items())))
 
+def fex_signature(cls, args):
+    params = ', '.join(['{}={}'.format(k, v) for k, v in args.items()])
+    return '{}({})'.format(cls.__name__, params)
 
 def save_answers(problem, predictions, path, outpath):
     # Saving output data
@@ -32,18 +35,26 @@ def save_answers(problem, predictions, path, outpath):
         json.dump(out_data, f, indent=4)
     print('\t', 'answers saved to file', 'answers-' + problem.problem_name + '.json')
 
-def print_fex_report(fexs, names, features):
-    fexs_text = ', '.join(names)
-    print('\t', '{} used'.format(fexs_text))
-    print('\t', '{} features identified'.format(features.shape[1]))
+def print_fex_report(fexs):
+    fex_sigs = [fex_signature(fex, args) for fex, args, _ in fexs]
+    print('  ' + '\n  '.join(fex_sigs))
 
 def print_result_report(problem, predictions):
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         f1 = f1_score(problem.test.y, predictions, average='macro')
-    print('\t', (predictions == '<UNK>').sum(), 'texts left unattributed')
-    print('\t', len(set(problem.train.y)), 'candidate authors')
-    print('\t', len(problem.train.X), 'known texts')
-    print('\t', len(problem.test.X), 'unknown texts')
     # f1 score is a bit off, because it's not called exactly as in evaluator
-    print('\t {:.3f} is f1 score'.format(f1))
+    print('  F1 = {:.3f} is f1 score'.format(f1))
+
+def make_benchmark_row(fexs, problem, predictions):
+        benchmark_row = dict(fexs[0][1])
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            scores = precision_recall_fscore_support(
+                problem.test.y, predictions, average='macro'
+            )
+
+        scores = dict(zip(['precision', 'recall', 'f1', 'support'], scores))
+        print('  F1 = {:.2f}'.format(scores['f1']))
+        benchmark_row.update(scores)
+        return benchmark_row
