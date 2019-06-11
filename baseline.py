@@ -6,7 +6,7 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 from sklearn.exceptions import ConvergenceWarning
-from sklearn import cluster
+from sklearn import cluster, linear_model
 
 from problems import ProblemLoader
 from utils import (
@@ -22,7 +22,7 @@ from feature_extractors import (
 )
 from classifiers import (
     BaselineClassifier, LogisticRegressionClassifier, RandomForestClassifier,
-    NaiveBayesClassifier, to_clf
+    NaiveBayesClassifier, NNClassifier, to_clf
 )
 
 
@@ -60,6 +60,7 @@ classifiers = [
     BaselineClassifier, LogisticRegressionClassifier, RandomForestClassifier,
     NaiveBayesClassifier, to_clf(cluster.MeanShift),
     to_clf(cluster.AffinityPropagation), to_clf(cluster.MiniBatchKMeans),
+    linear_model.Perceptron, NNClassifier
 ]
 
 
