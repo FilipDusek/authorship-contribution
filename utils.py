@@ -37,7 +37,7 @@ def save_answers(problem, predictions, path, outpath):
 
 def print_fex_report(fexs):
     fex_sigs = [fex_signature(fex, args) for fex, args, _ in fexs]
-    print('  ' + '\n  '.join(fex_sigs))
+    print('  Fex  ' + '\n  '.join(fex_sigs))
 
 def print_result_report(problem, predictions):
     with warnings.catch_warnings():
@@ -46,15 +46,18 @@ def print_result_report(problem, predictions):
     # f1 score is a bit off, because it's not called exactly as in evaluator
     print('  F1 = {:.3f} is f1 score'.format(f1))
 
-def make_benchmark_row(fexs, problem, predictions):
-        benchmark_row = dict(fexs[0][1])
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
-            scores = precision_recall_fscore_support(
-                problem.test.y, predictions, average='macro'
-            )
+def make_benchmark_row(classifier_cls, fexs, problem, predictions):
+    benchmark_row = dict(fexs[0][1])
+    benchmark_row['name'] = fexs[0][2]
+    benchmark_row['clf'] = classifier_cls.__name__
 
-        scores = dict(zip(['precision', 'recall', 'f1', 'support'], scores))
-        print('  F1 = {:.2f}'.format(scores['f1']))
-        benchmark_row.update(scores)
-        return benchmark_row
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        scores = precision_recall_fscore_support(
+            problem.test.y, predictions, average='macro'
+        )
+
+    scores = dict(zip(['precision', 'recall', 'f1', 'support'], scores))
+    print('  F1 = {:.2f}'.format(scores['f1']))
+    benchmark_row.update(scores)
+    return benchmark_row
