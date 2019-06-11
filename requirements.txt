@@ -5,3 +5,4 @@ nltk==3.4.1
 pandas==0.24.2
 gensim==3.7.3
 spacy==2.1.4
+tensorflow==2.0.0a0
