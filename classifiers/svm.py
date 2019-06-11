@@ -3,7 +3,7 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.calibration import CalibratedClassifierCV
 
 
-class BaselineClassifier:
+class SVMClassifier:
     def __init__(self):
         self.clf = OneVsRestClassifier(LinearSVC(C=1))
 
