@@ -4,6 +4,7 @@ import os
 import glob
 import json
 import functools
+import numpy as np
 
 
 class hashabledict(dict):
@@ -37,7 +38,7 @@ def save_answers(problem, predictions, path, outpath):
 
 def print_fex_report(fexs):
     fex_sigs = [fex_signature(fex, args) for fex, args, _ in fexs]
-    print('  Fex  ' + '\n  '.join(fex_sigs))
+    print('  Fex\n    ' + '\n    '.join(fex_sigs))
 
 def print_result_report(problem, predictions):
     with warnings.catch_warnings():
@@ -46,16 +47,28 @@ def print_result_report(problem, predictions):
     # f1 score is a bit off, because it's not called exactly as in evaluator
     print('  F1 = {:.3f} is f1 score'.format(f1))
 
-def make_benchmark_row(classifier_cls, fexs, problem, predictions):
-    benchmark_row = dict(fexs[0][1])
+def make_benchmark_row(classifier_cls, fexs, problem, predictions, train_data, test_data):
+    benchmark_row = {}
+    for i, (fcls, config, name) in enumerate(fexs):
+        benchmark_row['name_{}'.format(i+1)] = name
+        benchmark_row.update(
+            {'{}_{}'.format(k, i+1):v for k, v in config.items()}
+        )
+
     benchmark_row['name'] = fexs[0][2]
     benchmark_row['clf'] = classifier_cls.__name__
+    benchmark_row['problem'] = problem.problem_name
+    benchmark_row['train_shape'] = np.shape(train_data)
+    benchmark_row['test_shape'] = np.shape(test_data)
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
-        scores = precision_recall_fscore_support(
-            problem.test.y, predictions, average='macro'
-        )
+        if predictions is None:
+            scores = [0, 0, 0, 0]
+        else:
+            scores = precision_recall_fscore_support(
+                problem.test.y, predictions, average='macro'
+            )
 
     scores = dict(zip(['precision', 'recall', 'f1', 'support'], scores))
     print('  F1 = {:.2f}'.format(scores['f1']))
