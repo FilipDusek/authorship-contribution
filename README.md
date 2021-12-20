@@ -1,5 +1,5 @@
 # Cross-domain Authorship Attribution
-This project is aiming to solve [authorship attribution task](https://pan.webis.de/clef19/pan19-web/author-identification.html).
+This was a school assignment and it's aiming to find the best solution to [authorship attribution task](https://pan.webis.de/clef19/pan19-web/author-identification.html).
 
 # Setup
 1. Create virtual environment
